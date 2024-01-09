@@ -2,7 +2,7 @@
 \alias{roll.win}
 \title{Rolling Window Analysis of a Time Series}
 \usage{
-roll.win(x, window = 3, indicator = "mean", tau = NULL)
+roll.win(x, window = 3, indicator = c("mean", "var", "cov"), tau = NULL)
 }
 \arguments{
 \item{x}{a vector, usually a time series.}
