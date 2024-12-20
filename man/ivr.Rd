@@ -60,63 +60,68 @@ ivr(contr ~ score, endog = "score", iv = "contrprev", data = data.insurance, det
 ## Replicating an example of Ani Katchova (econometric academy)
 ## (https://www.youtube.com/watch?v=lm3UvcDa2Hc)
 ## on U.S. Women's Labor-Force Participation (data from Wooldridge 2013)
-library(wooldridge)
-data(mroz)
 
-# Select only working women
-mroz = mroz[mroz$"inlf" == 1,]
-mroz = mroz[, c("lwage", "educ", "exper", "expersq", "fatheduc", "motheduc")]
-attach(mroz)
+if (requireNamespace('wooldridge', quietly = TRUE)) {
+  library('wooldridge')
+  data(mroz)
+  # Select only working women
+  mroz = mroz[mroz$"inlf" == 1,]
+  mroz = mroz[, c("lwage", "educ", "exper", "expersq", "fatheduc", "motheduc")]
+  attach(mroz)
 
-# Regular ols of lwage on educ, where educ is suspected to be endogenous
-# hence estimators are biased
-ols(lwage ~ educ, data = mroz)
+  # Regular ols of lwage on educ, where educ is suspected to be endogenous
+  # hence estimators are biased
+  ols(lwage ~ educ, data = mroz)
 
-# Manual calculation of ols coeff
-Sxy(educ, lwage)/Sxy(educ)
+  # Manual calculation of ols coeff
+  Sxy(educ, lwage)/Sxy(educ)
 
-# Manual calculation of iv regression coeff
-# with fatheduc as instrument for educ
-Sxy(fatheduc, lwage)/Sxy(fatheduc, educ)
+  # Manual calculation of iv regression coeff
+  # with fatheduc as instrument for educ
+  Sxy(fatheduc, lwage)/Sxy(fatheduc, educ)
 
-# Calculation with 2SLS
-educ_hat = ols(educ ~ fatheduc)$fitted
-ols(lwage ~ educ_hat)
+  # Calculation with 2SLS
+  educ_hat = ols(educ ~ fatheduc)$fitted
+  ols(lwage ~ educ_hat)
 
-# Verify that educ_hat is completely determined by values of fatheduc
-head(cbind(educ,fatheduc,educ_hat), 10)
+  # Verify that educ_hat is completely determined by values of fatheduc
+  head(cbind(educ,fatheduc,educ_hat), 10)
 
-# Calculation with ivr()
-ivr(lwage ~ educ, endog = "educ", iv = "fatheduc", data = mroz, details = TRUE)
+  # Calculation with ivr()
+  ivr(lwage ~ educ, endog = "educ", iv = "fatheduc", data = mroz, details = TRUE)
 
-# Multiple regression model with 1 endogenous regressor (educ)
-# and two exogenous regressors (exper, expersq)
+  # Multiple regression model with 1 endogenous regressor (educ)
+  # and two exogenous regressors (exper, expersq)
 
-# Biased ols estimation
-ols(lwage ~ educ + exper + expersq, data = mroz)
+  # Biased ols estimation
+  ols(lwage ~ educ + exper + expersq, data = mroz)
 
-# Unbiased 2SLS estimation with fatheduc and motheduc as instruments
-# for the endogenous regressor educ
-ivr(lwage ~ educ + exper + expersq,
+  # Unbiased 2SLS estimation with fatheduc and motheduc as instruments
+  # for the endogenous regressor educ
+  ivr(lwage ~ educ + exper + expersq,
     endog = "educ", iv = c("fatheduc", "motheduc"),
     data = mroz)
 
-# Manual 2SLS
-# First stage: Regress endog. regressor on all exogen. regressors
-# and instruments -> get exogenous part of educ
-stage1.mod = ols(educ ~ exper + expersq + fatheduc + motheduc)
-educ_hat = stage1.mod$fitted
+  # Manual 2SLS
+  # First stage: Regress endog. regressor on all exogen. regressors
+  # and instruments -> get exogenous part of educ
+  stage1.mod = ols(educ ~ exper + expersq + fatheduc + motheduc)
+  educ_hat = stage1.mod$fitted
 
-# Second stage: Replace endog regressor with predicted value educ_hat
-# See the uncorrected standard errors!
-stage2.mod = ols(lwage ~ educ_hat + exper + expersq, data = mroz)
+  # Second stage: Replace endog regressor with predicted value educ_hat
+  # See the uncorrected standard errors!
+  stage2.mod = ols(lwage ~ educ_hat + exper + expersq, data = mroz)
 
-## Simple test for endogeneity of educ:
-## Include endogenous part of educ into model and see if it is signif.
-## (is signif. at 10% level)
-uhat = ols(educ ~ exper + expersq + fatheduc + motheduc)$resid
-ols(lwage ~ educ + exper + expersq + uhat)
-detach(mroz)
+  ## Simple test for endogeneity of educ:
+  ## Include endogenous part of educ into model and see if it is signif.
+  ## (is signif. at 10% level)
+  uhat = ols(educ ~ exper + expersq + fatheduc + motheduc)$resid
+  ols(lwage ~ educ + exper + expersq + uhat)
+  detach(mroz)
+
+} else {
+  message("Package 'wooldridge' not available.")
+}
 
 }
 \references{
